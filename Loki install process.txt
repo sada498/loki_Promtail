@@ -1,0 +1,88 @@
+*** Loki installation process ***
+
+Loki only need to install where the our production server for grafana.
+
+###### Loki producrtion install process ###
+1. Change the dir
+
+   cd /usr/local/bin
+
+2. Download the Loki binary
+
+curl -O -L "https://github.com/grafana/loki/releases/download/v2.3.0/loki-linux-amd64.zip"
+
+3. extract the binary
+
+ unzip "loki-linux-amd64.zip"
+
+4. make sure it is executable
+
+ chmod a+x "loki-linux-amd64"
+
+5. download loki config file
+  5.1 change dir to 
+
+   cd /opt
+
+ 5.2 create loki folder 
+
+  mkdir loki
+
+ 5.3 chnage  it loki dir
+
+  cd loki 
+
+ 5.4 download in loki dir
+
+ wget https://raw.githubusercontent.com/grafana/loki/v2.3.0/cmd/loki/loki-local-config.yaml
+
+6. open firewall
+
+ sudo firewall-cmd --permanent --zone=public --add-port=3100/tcp 
+
+7. Reload firewall
+
+ sudo firewall-cmd --reload
+
+8. create service for Loki
+
+sudo tee /etc/systemd/system/loki.service<<EOF
+[Unit]
+Description=Loki service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/loki-linux-amd64 -config.file /opt/loki/loki-local-config.yaml
+SuccessExitStatus=143
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+9.Reload daemon
+
+ sudo systemctl daemon-reload
+
+10. Start Loki service
+
+ sudo systemctl enable loki.service
+ sudo systemctl start loki.service
+
+11. Check status of the service
+
+ systemctl status loki.service
+
+
+
+
+
+
+
+
+
+
