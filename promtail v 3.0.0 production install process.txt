@@ -1,0 +1,88 @@
+###### promtail producrtion install process ###
+
+
+What is promtail Agent?
+
+Promtail is an agent which ships the contents of local logs to a private Loki instance. It is usually deployed to every machine (servers) that has applications needed to be monitored.
+
+Note: we can install promtail Agent  any server and push the log data to LOKI.
+
+1. Change the dir
+
+   cd /usr/local/bin
+
+2. Download the promtail binary
+
+curl -O -L "https://github.com/grafana/loki/releases/download/v3.0.0/promtail-linux-amd64.zip"
+
+3. extract the binary
+
+ unzip "promtail-linux-amd64.zip"
+
+4. make sure it is executable
+
+ chmod a+x "promtail-linux-amd64"
+
+5. download promtail config file
+  5.1 change dir to 
+
+   cd /opt
+
+
+ 5.2 create loki folder 
+
+  mkdir loki
+
+ 5.3 chnage  it loki dir
+
+  cd loki 
+
+ 5.4 download in loki dir
+
+wget https://raw.githubusercontent.com/grafana/loki/main/clients/cmd/promtail/promtail-local-config.yaml
+
+ 5.5 vim promtail-local-config.yaml 
+ 
+  Update the .yaml file (new promtail-local-config.yaml provided with updated config)
+  
+6. open firewall
+
+ sudo firewall-cmd --permanent --zone=public --add-port=9080/tcp 
+
+7. Reload firewall
+
+ sudo firewall-cmd --reload
+
+8. create service for promtail
+
+sudo tee /etc/systemd/system/promtail.service<<EOF
+[Unit]
+Description=Promtail service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/promtail-linux-amd64 -config.file /opt/loki/promtail-local-config.yaml
+SuccessExitStatus=143
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+9.Reload daemon
+
+ sudo systemctl daemon-reload
+
+10. Start promtail service
+
+ sudo systemctl enable promtail.service
+ sudo systemctl start promtail.service
+
+11. Check status of the service
+
+ systemctl status promtail.service
